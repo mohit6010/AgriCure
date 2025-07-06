@@ -48,8 +48,8 @@ const Navbar = () => {
             </button>
           </div>
           
-          {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
+          {/* Desktop Auth Buttons - Always Visible */}
+          <div className="hidden sm:flex items-center space-x-4">
             <Button asChild variant="ghost">
               <Link to="/login">Login</Link>
             </Button>
@@ -58,11 +58,21 @@ const Navbar = () => {
             </Button>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Auth Buttons - Visible on small screens */}
+          <div className="flex sm:hidden items-center space-x-2">
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/login">Login</Link>
+            </Button>
+            <Button asChild size="sm" className="bg-grass-600 hover:bg-grass-700">
+              <Link to="/signup">Start</Link>
+            </Button>
+          </div>
+
+          {/* Mobile Menu Button - Only for navigation links */}
           <button
-            className="md:hidden p-2"
+            className="md:hidden p-2 ml-2"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
+            aria-label="Toggle navigation menu"
           >
             {isMenuOpen ? (
               <X className="h-6 w-6 text-gray-700" />
@@ -72,7 +82,7 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Mobile Navigation Menu */}
+        {/* Mobile Navigation Menu - Only navigation links */}
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4 border-t border-gray-200">
             <div className="flex flex-col space-y-4 pt-4">
@@ -94,14 +104,6 @@ const Navbar = () => {
               >
                 How It Works
               </button>
-              <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-                <Button asChild variant="ghost" className="justify-start">
-                  <Link to="/login">Login</Link>
-                </Button>
-                <Button asChild className="bg-grass-600 hover:bg-grass-700 justify-start">
-                  <Link to="/signup">Get Started</Link>
-                </Button>
-              </div>
             </div>
           </div>
         )}
