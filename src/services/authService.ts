@@ -17,7 +17,7 @@ export class AuthService {
   static async signUp(data: SignUpData) {
     const { email, password, fullName, farmLocation } = data;
     
-    const { data: authData, error } = await supabase.auth.signUp({
+    const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -28,7 +28,15 @@ export class AuthService {
       },
     });
 
-    if (error) throw error;
+    if (signUpError) {
+      console.error('Signup error:', signUpError);
+      throw new Error(signUpError.message || 'Failed to create account');
+    }
+
+    if (!authData.user) {
+      throw new Error('Failed to create user account');
+    }
+
     return authData;
   }
 

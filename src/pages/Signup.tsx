@@ -63,10 +63,10 @@ const Signup = () => {
       });
       navigate("/login");
     } catch (error: any) {
-      console.error('Signup error:', error);
+      console.error('Signup error details:', error);
       toast({
         title: "Signup Failed",
-        description: error.message || "Failed to create account. Please try again.",
+        description: error.message || "Failed to create account. Please check your details and try again.",
         variant: "destructive"
       });
     } finally {
