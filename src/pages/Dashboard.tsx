@@ -5,7 +5,11 @@ import EnhancedFarmOverview from "@/components/EnhancedFarmOverview";
 import RealTimeSoilAnalysis from "@/components/RealTimeSoilAnalysis";
 import EnhancedFertilizerForm from "@/components/EnhancedFertilizerForm";
 import EnhancedFertilizerRecommendations from "@/components/EnhancedFertilizerRecommendations";
+import ProfileSection from "@/components/ProfileSection";
+import RecommendationHistory from "@/components/RecommendationHistory";
 import { predictFertilizer, FERTILIZER_INFO, CROP_TYPES, SOIL_TYPES } from "@/services/fertilizerMLService";
+import { RecommendationService } from "@/services/recommendationService";
+import { useToast } from "@/hooks/use-toast";
 
 interface FormData {
   fieldName: string;
@@ -68,9 +72,7 @@ const Dashboard = () => {
   const [formData, setFormData] = useState<FormData | null>(null);
   const [recommendations, setRecommendations] = useState<EnhancedRecommendation | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  
-  // Get user name from localStorage or use default
-  const userName = localStorage.getItem('userName') || 'John Farmer';
+  const { toast } = useToast();
 
   const generateEnhancedRecommendations = async (data: FormData): Promise<EnhancedRecommendation> => {
     const pH = parseFloat(data.soilPH);
@@ -217,8 +219,45 @@ const Dashboard = () => {
     try {
       const enhancedRecommendations = await generateEnhancedRecommendations(data);
       setRecommendations(enhancedRecommendations);
+      
+      // Save recommendation to database
+      try {
+        await RecommendationService.saveRecommendation({
+          fieldName: data.fieldName,
+          fieldSize: parseFloat(data.fieldSize),
+          fieldSizeUnit: data.sizeUnit,
+          cropType: Object.keys(CROP_TYPES).find(key => CROP_TYPES[key as keyof typeof CROP_TYPES] === parseInt(data.cropType)) || data.cropType,
+          soilType: Object.keys(SOIL_TYPES).find(key => SOIL_TYPES[key as keyof typeof SOIL_TYPES] === parseInt(data.soilType)) || data.soilType,
+          soilPH: parseFloat(data.soilPH),
+          nitrogen: parseFloat(data.nitrogen),
+          phosphorus: parseFloat(data.phosphorus),
+          potassium: parseFloat(data.potassium),
+          temperature: parseFloat(data.temperature),
+          humidity: parseFloat(data.humidity),
+          soilMoisture: parseFloat(data.soilMoisture),
+          mlPrediction: enhancedRecommendations.mlPrediction,
+          recommendations: enhancedRecommendations
+        });
+        
+        toast({
+          title: "Recommendation Saved",
+          description: "Your fertilizer recommendation has been saved to your history.",
+        });
+      } catch (saveError) {
+        console.error('Error saving recommendation:', saveError);
+        toast({
+          title: "Warning",
+          description: "Recommendation generated but not saved to history.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Error generating recommendations:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate recommendations. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -226,7 +265,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHeader userName={userName} />
+      <DashboardHeader />
       
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <div className="mb-4 sm:mb-8">
@@ -237,7 +276,7 @@ const Dashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-3 h-auto">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto">
             <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
               Overview
             </TabsTrigger>
@@ -246,6 +285,12 @@ const Dashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="recommendations" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
               ML Recommendations
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+              History
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="text-xs sm:text-sm px-2 sm:px-4 py-2">
+              Profile
             </TabsTrigger>
           </TabsList>
 
@@ -271,6 +316,14 @@ const Dashboard = () => {
                 formData={formData}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-4 sm:space-y-6">
+            <RecommendationHistory />
+          </TabsContent>
+
+          <TabsContent value="profile" className="space-y-4 sm:space-y-6">
+            <ProfileSection />
           </TabsContent>
         </Tabs>
       </div>

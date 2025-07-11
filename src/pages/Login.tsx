@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AuthService } from "@/services/authService";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -18,21 +19,24 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Extract name from email for demo purposes
-    const userName = email.split('@')[0].replace(/[^a-zA-Z\s]/g, '').replace(/\b\w/g, l => l.toUpperCase()) || 'Farmer';
-    
-    // Store user name in localStorage for dashboard use
-    localStorage.setItem('userName', userName);
-
-    // Simulate login - replace with actual authentication
-    setTimeout(() => {
+    try {
+      await AuthService.signIn({ email, password });
+      
       toast({
         title: "Login Successful",
-        description: `Welcome back, ${userName}!`,
+        description: "Welcome back to AgriCure!",
       });
       navigate("/dashboard");
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast({
+        title: "Login Failed",
+        description: error.message || "Invalid email or password. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleBack = () => {
@@ -100,7 +104,14 @@ const Login = () => {
                 className="w-full bg-grass-600 hover:bg-grass-700 text-sm md:text-base py-2 md:py-3"
                 disabled={isLoading}
               >
-                {isLoading ? "Signing In..." : "Sign In"}
+                {isLoading ? (
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Signing In...</span>
+                  </div>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
             </form>
             

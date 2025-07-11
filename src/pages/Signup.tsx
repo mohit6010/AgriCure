@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AuthService } from "@/services/authService";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -38,20 +39,39 @@ const Signup = () => {
       return;
     }
 
+    if (formData.password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive"
+      });
+      return;
+    }
     setIsLoading(true);
 
-    // Store user name for future use
-    localStorage.setItem('userName', formData.name);
-
-    // Simulate signup - replace with actual authentication
-    setTimeout(() => {
+    try {
+      await AuthService.signUp({
+        email: formData.email,
+        password: formData.password,
+        fullName: formData.name,
+        farmLocation: formData.farmLocation
+      });
+      
       toast({
         title: "Account Created Successfully",
-        description: "Welcome to AgriCure! Please sign in to continue.",
+        description: "Welcome to AgriCure! You can now sign in to your account.",
       });
       navigate("/login");
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      toast({
+        title: "Signup Failed",
+        description: error.message || "Failed to create account. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleBack = () => {
@@ -160,7 +180,14 @@ const Signup = () => {
                 className="w-full bg-grass-600 hover:bg-grass-700 text-sm md:text-base py-2 md:py-3"
                 disabled={isLoading}
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isLoading ? (
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Creating Account...</span>
+                  </div>
+                ) : (
+                  "Create Account"
+                )}
               </Button>
             </form>
             
